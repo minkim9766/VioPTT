@@ -22,7 +22,7 @@ TRANSCRIPTOR_CHECKPOINT="${WORKSPACE}/checkpoints/transcriptor_model.pth"
 TRANS_FEATURES_LIST="reg_onset_output reg_offset_output frame_output velocity_output"
 
 # ========== Threshold Parameters ==========
-FRAME_THRESHOLD="0.1"
+FRAME_THRESHOLD="0.05"
 ONSET_THRESHOLD="0.3"
 OFFSET_THRESHOLD="0.3"
 PEDAL_OFFSET_THRESHOLD="0.2"
