@@ -22,7 +22,11 @@ import config
 class PianoTranscription(object):
     def __init__(self, model_type, checkpoint_path=None, 
         segment_samples=16000*10, device=torch.device('cuda'), 
-        post_processor_type='regression'):
+        post_processor_type='regression',
+        onset_threshold=0.3,
+        offset_threshold=0.3,
+        frame_threshold=0.1,
+        pedal_offset_threshold=0.2):
         """Class for transcribing piano solo recording.
 
         Args:
@@ -30,6 +34,10 @@ class PianoTranscription(object):
           checkpoint_path: str
           segment_samples: int
           device: 'cuda' | 'cpu'
+          onset_threshold: float, default 0.3
+          offset_threshold: float, default 0.3
+          frame_threshold: float, default 0.1
+          pedal_offset_threshold: float, default 0.2
         """
 
         if 'cuda' in str(device) and torch.cuda.is_available():
@@ -42,10 +50,10 @@ class PianoTranscription(object):
         self.post_processor_type = post_processor_type
         self.frames_per_second = config.frames_per_second
         self.classes_num = config.classes_num
-        self.onset_threshold = 0.3
-        self.offset_threshod = 0.3
-        self.frame_threshold = 0.1
-        self.pedal_offset_threshold = 0.2
+        self.onset_threshold = onset_threshold
+        self.offset_threshold = offset_threshold
+        self.frame_threshold = frame_threshold
+        self.pedal_offset_threshold = pedal_offset_threshold
 
         # Build model
         Model = eval(model_type)
@@ -108,7 +116,7 @@ class PianoTranscription(object):
           'reg_pedal_offset_output': (frames_num, 1), 
           'pedal_frame_output': (frames_num, 1)}"""
         
-        # print(f"output_dict keys: {output_dict.keys()}") # ['reg_onset_output', 'reg_offset_output', 'frame_output', 'velocity_output', 'onset_output', 'onset_shift_output', 'offset_output', 'offset_shift_output']
+        # print(f"output_dict keys: {output_dict.keys()}") # ['reg_onset_output', 'reg_offset_output', 'frame_output', 'velocity_output', 'onset_output', 'onset_shift_output', 'offset_output', 'o[...]
         # print(f"output_dict reg_onset_output shape: {output_dict['reg_onset_output'].shape}") # (14000, 88)
         # print(f"output_dict reg_onset_output: {output_dict['reg_onset_output']}")
         # a=input("Press Enter to continue !!!!!! ...")
@@ -128,7 +136,7 @@ class PianoTranscription(object):
             """Proposed high-resolution regression post processing algorithm."""
             post_processor = RegressionPostProcessor(self.frames_per_second, 
                 classes_num=self.classes_num, onset_threshold=self.onset_threshold, 
-                offset_threshold=self.offset_threshod, 
+                offset_threshold=self.offset_threshold, 
                 frame_threshold=self.frame_threshold, 
                 pedal_offset_threshold=self.pedal_offset_threshold)
 
@@ -224,6 +232,10 @@ def inference(args):
     device = torch.device(f'cuda:{args.device}') if torch.cuda.is_available() else torch.device('cpu')
     audio_path = args.audio_path
     output_dir = args.output_dir
+    onset_threshold = args.onset_threshold
+    offset_threshold = args.offset_threshold
+    frame_threshold = args.frame_threshold
+    pedal_offset_threshold = args.pedal_offset_threshold
     
     sample_rate = config.sample_rate
     segment_samples = sample_rate * 10  
@@ -247,7 +259,11 @@ def inference(args):
     # Transcriptor
     transcriptor = PianoTranscription(model_type, device=device, 
         checkpoint_path=checkpoint_path, segment_samples=segment_samples, 
-        post_processor_type=post_processor_type)
+        post_processor_type=post_processor_type,
+        onset_threshold=onset_threshold,
+        offset_threshold=offset_threshold,
+        frame_threshold=frame_threshold,
+        pedal_offset_threshold=pedal_offset_threshold)
 
     # Transcribe and write out to MIDI file
     transcribe_time = time.time()
@@ -287,6 +303,10 @@ if __name__ == '__main__':
     parser.add_argument('--audio_path', type=str, required=True)
     parser.add_argument('--output_dir', type=str, required=True)
     parser.add_argument('--device', type=int, default=0)
+    parser.add_argument('--onset_threshold', type=float, default=0.3, help='Onset detection threshold (default: 0.3)')
+    parser.add_argument('--offset_threshold', type=float, default=0.3, help='Offset detection threshold (default: 0.3)')
+    parser.add_argument('--frame_threshold', type=float, default=0.1, help='Frame detection threshold (default: 0.1)')
+    parser.add_argument('--pedal_offset_threshold', type=float, default=0.2, help='Pedal offset threshold (default: 0.2)')
 
     args = parser.parse_args()
     inference(args)
