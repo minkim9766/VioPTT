@@ -114,6 +114,10 @@ def main():
     parser.add_argument('--pad_seconds', type=float, default=0.02)
     parser.add_argument('--model_type', type=str, default='Regress_onset_offset_frame_velocity_CRNN')
     parser.add_argument('--gt_technique', type=str, default=None, help='Force a GT technique for all files, or "auto" for RWC mapping')
+    parser.add_argument('--onset_threshold', type=float, default=0.3, help='Onset detection threshold (default: 0.3)')
+    parser.add_argument('--offset_threshold', type=float, default=0.3, help='Offset detection threshold (default: 0.3)')
+    parser.add_argument('--frame_threshold', type=float, default=0.1, help='Frame detection threshold (default: 0.1)')
+    parser.add_argument('--pedal_offset_threshold', type=float, default=0.2, help='Pedal offset threshold (default: 0.2)')
 
     args = parser.parse_args()
 
@@ -123,9 +127,27 @@ def main():
     class_names = DEFAULT_TECHNIQUE_CLASSES
     trans_feat_dim = 88 * (4 if args.trans_features_list is None else len(args.trans_features_list))
 
+    # Print threshold parameters
+    print("="*60)
+    print("THRESHOLD PARAMETERS")
+    print("="*60)
+    print(f"Onset Threshold: {args.onset_threshold}")
+    print(f"Offset Threshold: {args.offset_threshold}")
+    print(f"Frame Threshold: {args.frame_threshold}")
+    print(f"Pedal Offset Threshold: {args.pedal_offset_threshold}")
+    print("="*60)
+
     # 一次性載入模型
     print("Loading models...")
-    transcriptor_obj = PianoTranscription(model_type=args.model_type, checkpoint_path=args.transcriptor_checkpoint, device=device)
+    transcriptor_obj = PianoTranscription(
+        model_type=args.model_type, 
+        checkpoint_path=args.transcriptor_checkpoint, 
+        device=device,
+        onset_threshold=args.onset_threshold,
+        offset_threshold=args.offset_threshold,
+        frame_threshold=args.frame_threshold,
+        pedal_offset_threshold=args.pedal_offset_threshold
+    )
     note_model = load_note_model(args.note_model_checkpoint, device, config.frames_per_second, args.use_trans_features, trans_feat_dim)
 
     # 收集檔案
