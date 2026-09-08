@@ -21,6 +21,12 @@ TRANSCRIPTOR_CHECKPOINT="${WORKSPACE}/checkpoints/transcriptor_model.pth"
 # Transcription features to use
 TRANS_FEATURES_LIST="reg_onset_output reg_offset_output frame_output velocity_output"
 
+# ========== Threshold Parameters ==========
+FRAME_THRESHOLD="0.1"
+ONSET_THRESHOLD="0.3"
+OFFSET_THRESHOLD="0.3"
+PEDAL_OFFSET_THRESHOLD="0.2"
+
 # ===================================
 
 if [[ ! -d "$AUDIO_DIR" ]]; then
@@ -43,7 +49,11 @@ python "${WORKSPACE}/piano_transcription/pytorch/infer_technique.py" \
   --use_trans_features \
   --trans_features_list $TRANS_FEATURES_LIST \
   --gt_technique "auto" \
-  --device 0
+  --device 0 \
+  --frame_threshold $FRAME_THRESHOLD \
+  --onset_threshold $ONSET_THRESHOLD \
+  --offset_threshold $OFFSET_THRESHOLD \
+  --pedal_offset_threshold $PEDAL_OFFSET_THRESHOLD
 
 echo "-------------------------------------------"
 echo "Done! Full report shown above."
